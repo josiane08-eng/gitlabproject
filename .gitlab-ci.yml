@@ -1,0 +1,33 @@
+variables:
+    IMAGE_NAME: beby/nodejs
+    IMAGE_TAG: v1.0.1
+    DOCKER_HOST: tcp://docker:2376
+    DOCKER_TLS_CERTDIR: "/certs"
+    DOCKER_TLS_VERIFY: 1
+    DOCKER_CERT_PATH: "$DOCKER_TLS_CERTDIR/client"
+
+stages:
+  - install
+  - deploy
+
+run_install:
+  stage: install
+  image: node:14.15.1
+  before_script:
+    - apt update
+  script:
+    - npm install
+    - npm run lint
+    - npm run build
+
+build_image:
+  stage: deploy
+  image: docker:latest
+  services:
+    - docker:dind
+
+  script:
+  - docker login -u $DOCKER_USER -p $DOCKER_PASS
+  - docker build -t $IMAGE_NAME:$IMAGE_TAG . 
+  - docker push $IMAGE_NAME:$IMAGE_TAG        
+
